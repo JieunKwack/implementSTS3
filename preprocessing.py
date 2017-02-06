@@ -8,18 +8,26 @@ class Bound:
         self.xmax = df.max().max()
         self.xmin = df.min().min()
 
+class Bound_q:
+    def __init__(self,df):
+        self.tmax = df.index.values[1:].max()
+        self.tmin = df.index.values[1:].min()
+        self.xmax = df.max().max()
+        self.xmin = df.min().min()
+
 def readDataasDF(file_path):
     df = pd.read_csv(file_path, header=None)
     df.rename(columns={0: 'label'}, inplace=True)
     return df
-# data: S&P500_08to10, row(index): date, columns: ticker
-# del D['date'] # date를 index로 지정한 후, date열 제거
 
-def TimeSeriesTranstoSet(q, BD, e, s):
-    r = np.floor((q - BD.xmin)/s + 1)
-    c = globals()['col']
-    query = sorted(set((r-1) * COLUMN_NUM + c))
-    return query
+def TimeSeriesTranstoSet(S, bound, e, s):
+    COLUMN_NUM = ((bound.tmax-bound.tmin)/e)
+    row = (S.loc[:,S.columns!='label'] - bound.xmin)/s + 1
+    col = ((S.columns.values[1:]-BD.tmin)/epsilon+1)
+    number = (row-1).mul(COLUMN_NUM) + col
+    result = np.floor(pd.DataFrame(data=(sorted(set(number.loc[element])) for element in number.index)))
+    result.to_csv('TimeSeriesTranstoSet.csv')
+    return result
 
 def Trans_outQuery_to_Set(): # Alg. needs to modify to Code
     # !Add: devide Q into Q_in and Q_out
@@ -32,3 +40,8 @@ def Trans_outQuery_to_Set(): # Alg. needs to modify to Code
     Qout = Qout + maxNumber
     Q = set(Qin).union(set(Qout))
     return Q
+
+def Jaccard(d, q):
+    U = q.union(d)
+    I = q.intersection(d)
+    return len(I)/len(U)

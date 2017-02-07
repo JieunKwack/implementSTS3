@@ -48,8 +48,8 @@ def QueryTranstoSet(Q, bound, e, s):
     col = ((Q.index.values[Q.index!='label'] - bound.tmin)/e + 1)
     number = ((row-1).mul(COLUMN_NUM) + col).astype(int)
     result = pd.DataFrame(sorted(set(number)))
-    result.to_csv('QueryTranstoSet.csv')
-    return result
+    result.to_csv('QueryTranstoSet.csv', mode="a")
+    return sorted(set(number))
 
 def Trans_outQuery_to_Set(Q, bound, e, s):
     Q_in, Q_out = divideQ_to_Qin_and_out(Q, bound)# divide Q to Q_in and Q_out
@@ -59,7 +59,7 @@ def Trans_outQuery_to_Set(Q, bound, e, s):
     maxNumber = bound.rows * bound.columns # maximal cell ID in Bound(D)
     Qout = Qout + maxNumber
     Q_trans = set(Qin).union(set(Qout))
-    return Q_trans
+    return sorted(Q_trans)
 
 def divideQ_to_Qin_and_out(q, bound):
     q = q[q.index!='label']
@@ -68,6 +68,6 @@ def divideQ_to_Qin_and_out(q, bound):
     return Qin, Qout
 
 def Jaccard(d, q):
-    U = set(q).union(set(d))
-    I = set(q).intersection(set(d))
+    U = q.union(d)
+    I = q.intersection(d)
     return len(I)/len(U)

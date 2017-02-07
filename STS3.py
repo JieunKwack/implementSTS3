@@ -1,7 +1,7 @@
 import pandas as pd
 import datetime as dt
 import numpy as np
-from preprocessing import Bound
+from preprocessing import Bound, readDataasDF, TimeSeriesTranstoSet, QueryTranstoSet, Bound_q, NN, Trans_outQuery_to_Set, Jaccard
 
 # set parameter cell size
 epsilon = 21
@@ -12,26 +12,25 @@ D = readDataasDF('CBF\\CBF_TRAIN')
 Q = readDataasDF('CBF\\CBF_TEST')
 
 BD = Bound(D) # compute Bound
+D_trans = TimeSeriesTranstoSet(D, BD, epsilon, sigma)
 
-#preproc. translate ts to set
-COLUMN_NUM = ((BD.tmax-BD.tmin)/epsilon)
-row = (D.loc[:,D.columns!='label'] - BD.xmin)/sigma + 1
-col = ((D.columns.values[1:]-BD.tmin)/epsilon+1)
-number = (row-1).mul(COLUMN_NUM) + col
-result = np.floor(pd.DataFrame(data=(sorted(set(number.loc[element])) for element in number.index)))
-result.to_csv('TimeSeriesTranstoSet.csv')
+ans = NN()
+errorRate = 0
+for q in Q.index:
+    query = Q.loc[q]
+    BQ = Bound_q(query)
+    if ((BQ.xmin < BD.xmin) | (BD.xmax < BQ.xmax)):# check Query bound out of the DB bound
+        Q_trans = Trans_outQuery_to_Set(query, BD, epsilon, sigma)
+    else:
+        Q_trans = QueryTranstoSet(query, BD, epsilon, sigma)
+    for i in D_trans.index:
+        jac = Jaccard(D_trans.loc[i], Q_trans)
+        print(jac)
+        if (ans.Jac < jac):
+            ans.TS = D_trans.loc[i]
+            ans.Jac = jac
+            ans.label = D.label[i]
+    if (query.label != ans.label):
+        errorRate = errorRate + 1
 
-Max_jac = 0
-# query = TimeSeriesTranstoSet(Q, BD, epsilon, sigma)
-query = set(result.loc['A'])
-for ticker in result.index:
-    #jaccard sim to query~
-    target = set(result.loc[ticker])
-    U = query.union(target)
-    I = query.intersection(target)
-    temp = len(I)/len(U)
-    if ((temp > Max_jac) & ('A' != ticker)):
-        Max_jac = temp
-        Max_ticker = ticker
-
-print(Max_jac, Max_ticker)
+print("errorRate: ", errorRate / len(Q.index))

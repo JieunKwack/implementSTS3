@@ -34,8 +34,9 @@ def readDataasDF(file_path):
 
 def TimeSeriesTranstoSet(S, bound, e, s):
     COLUMN_NUM = ((bound.tmax-bound.tmin)/e)
-    row = (S.loc[:,S.columns!='label'] - bound.xmin)/s + 1
-    col = ((S.columns.values[1:] - bound.tmin)/e + 1)
+    print("# of col:", COLUMN_NUM)
+    row = ((S.loc[:,S.columns!='label'] - bound.xmin)/s + 1).astype(int)
+    col = ((S.columns.values[1:] - bound.tmin)/e + 1).astype(int)
     number = ((row-1).mul(COLUMN_NUM) + col).astype(int)
     bound.setRowsAndCols(row.max().max(), col.max().max())
     result = pd.DataFrame(data=(sorted(set(number.loc[element])) for element in number.index))

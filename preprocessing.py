@@ -34,31 +34,32 @@ def readDataasDF(file_path):
 
 def TimeSeriesTranstoSet(S, bound, e, s):
     COLUMN_NUM = ((bound.tmax-bound.tmin)/e)
-    print("# of col:", COLUMN_NUM)
     row = ((S.loc[:,S.columns!='label'] - bound.xmin)/s + 1).astype(int)
     col = ((S.columns.values[1:] - bound.tmin)/e + 1).astype(int)
     number = ((row-1).mul(COLUMN_NUM) + col).astype(int)
     bound.setRowsAndCols(row.max().max(), col.max().max())
-    result = pd.DataFrame(data=(sorted(set(number.loc[element])) for element in number.index))
+    result = pd.DataFrame(data=(set(sorted(number.loc[element])) for element in number.index))
     result.to_csv('TimeSeriesTranstoSet.csv')
     return result
 
 def QueryTranstoSet(Q, bound, e, s):
     COLUMN_NUM = ((bound.tmax-bound.tmin)/e)
-    row = (Q[Q.index!='label'] - bound.xmin)/s + 1
-    col = ((Q.index.values[Q.index!='label'] - bound.tmin)/e + 1)
-    number = ((row-1).mul(COLUMN_NUM) + col).astype(int)
-    result = pd.DataFrame(sorted(set(number)))
+    row = ((Q[Q.index!='label'] - bound.xmin)/s + 1).astype(int)
+    col = ((Q.index.values[Q.index!='label'] - bound.tmin)/e + 1).astype(int)
+    number = set(((row-1).mul(COLUMN_NUM) + col).astype(int))
+    result = pd.DataFrame(sorted(number))
     result.to_csv('QueryTranstoSet.csv', mode="a")
-    return sorted(set(number))
+    return number
 
 def Trans_outQuery_to_Set(Q, bound, e, s):
     Q_in, Q_out = divideQ_to_Qin_and_out(Q, bound)# divide Q to Q_in and Q_out
     Qin = QueryTranstoSet(Q_in, bound, e, s)
     BQ = Bound_q(Q_out)
     Qout = QueryTranstoSet(Q_out, BQ, e, s)
-    maxNumber = bound.rows * bound.columns # maximal cell ID in Bound(D)
-    Qout = Qout + maxNumber
+    maxNumber = bound.rows * bound.cols # maximal cell ID in Bound(D)
+    # print("Before Qout&maxNumber: ", Qout, maxNumber)
+    Qout = list(Qout) + maxNumber
+    # print("After: ", Qout)
     Q_trans = set(Qin).union(set(Qout))
     return sorted(Q_trans)
 

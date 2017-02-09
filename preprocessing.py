@@ -3,12 +3,10 @@ import numpy as np
 
 class Bound:
     def __init__(self, df):
-        self.tmax = df.columns.values[1:].max()
-        self.tmin = df.columns.values[1:].min()
+        self.tmax = df.columns.values[df.columns!='label'].max()
+        self.tmin = df.columns.values[df.columns!='label'].min()
         self.xmax = df.max().max()
         self.xmin = df.min().min()
-        self.rows = 0
-        self.columns = 0
 
     def setRowsAndCols(self, rows, cols):
         self.rows = rows
@@ -23,8 +21,8 @@ class Bound_q:
 
 class NN:
     def __init__(self):
-        self.TS = 0
-        self.Jac = 0
+        self.TS = -1
+        self.Jac = -1
         self.label = ''
 
 def readDataasDF(file_path):
@@ -33,17 +31,19 @@ def readDataasDF(file_path):
     return df
 
 def TimeSeriesTranstoSet(S, bound, e, s):
-    COLUMN_NUM = ((bound.tmax-bound.tmin)/e)
+    COLUMN_NUM = round((bound.tmax-bound.tmin)/e,0)
+    # row = (S.loc[:,S.columns!='label'] - bound.xmin)/s + 1
     row = ((S.loc[:,S.columns!='label'] - bound.xmin)/s + 1).astype(int)
-    col = ((S.columns.values[1:] - bound.tmin)/e + 1).astype(int)
-    number = ((row-1).mul(COLUMN_NUM) + col).astype(int)
+    # print(row)
+    col = ((S.columns.values[S.columns!='label'] - bound.tmin)/e + 1).astype(int)
     bound.setRowsAndCols(row.max().max(), col.max().max())
+    number = ((row-1).mul(COLUMN_NUM) + col).astype(int)
     result = pd.DataFrame(data=(set(sorted(number.loc[element])) for element in number.index))
     result.to_csv('TimeSeriesTranstoSet.csv')
     return result
 
 def QueryTranstoSet(Q, bound, e, s):
-    COLUMN_NUM = ((bound.tmax-bound.tmin)/e)
+    COLUMN_NUM = round((bound.tmax-bound.tmin)/e,0)
     row = ((Q[Q.index!='label'] - bound.xmin)/s + 1).astype(int)
     col = ((Q.index.values[Q.index!='label'] - bound.tmin)/e + 1).astype(int)
     number = set(((row-1).mul(COLUMN_NUM) + col).astype(int))
@@ -57,11 +57,9 @@ def Trans_outQuery_to_Set(Q, bound, e, s):
     BQ = Bound_q(Q_out)
     Qout = QueryTranstoSet(Q_out, BQ, e, s)
     maxNumber = bound.rows * bound.cols # maximal cell ID in Bound(D)
-    # print("Before Qout&maxNumber: ", Qout, maxNumber)
     Qout = list(Qout) + maxNumber
-    # print("After: ", Qout)
     Q_trans = set(Qin).union(set(Qout))
-    return sorted(Q_trans)
+    return Q_trans
 
 def divideQ_to_Qin_and_out(q, bound):
     q = q[q.index!='label']

@@ -2,20 +2,25 @@ import pandas as pd
 import datetime as dt
 import numpy as np
 from preprocessing import Bound, readDataasDF, TimeSeriesTranstoSet, QueryTranstoSet, Bound_q, NN, Trans_outQuery_to_Set, Jaccard
-import csv
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 
 # set parameter cell size
-sigma = 0.88
-epsilon = 4
+sigma = 0.18
+epsilon = 21
 
 # read some database
-D = readDataasDF('ElectricDevices\\ElectricDevices_TRAIN')
-Q = readDataasDF('ElectricDevices\\ElectricDevices_TEST')
+D = readDataasDF('CBF\\CBF_TRAIN')
+Q = readDataasDF('CBF\\CBF_TEST')
 
 BD = Bound(D) # compute Bound
-print(BD.xmin, BD.xmax)
-D_trans = TimeSeriesTranstoSet(D, BD, epsilon, sigma) #
-print("done transtoSet")
+# avgTS
+# label = D.label.unique()
+# D = pd.DataFrame(D[D.label == i].sum() for i in label)
+# D.label = label
+
+D_trans = TimeSeriesTranstoSet(D, BD, epsilon, sigma)
+
 errorRate = 0
 for q in Q.index:
     query = Q.loc[q]
@@ -27,9 +32,7 @@ for q in Q.index:
         Q_trans = QueryTranstoSet(query, BD, epsilon, sigma)
     for i in D_trans.index:
         Q_trans = set(filter(lambda x: x == x , Q_trans)) # remove NAN
-        # print(Q_trans)
         Target = set(filter(lambda x: x == x , D_trans.loc[i]))
-        # print(Target)
         jac = Jaccard(set(Target), set(Q_trans))
         if (ans.Jac < jac):
             ans.TS = i # index: D_trans.loc[i]
@@ -37,8 +40,9 @@ for q in Q.index:
             ans.label = D.label[i]
     if (query.label != ans.label):
         errorRate = errorRate + 1
-        # print("index q&i: ", q, ans.TS)
+        print("index q&i: ", q, ans.TS)
+        print(query.label, ans.label)
         # print("jac: ", ans.Jac)
 
 print("errorRate: ", errorRate / len(Q.index))
-# print(errorRate)
+print(errorRate)

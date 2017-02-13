@@ -4,10 +4,14 @@ import numpy as np
 from preprocessing import Bound, readDataasDF, TimeSeriesTranstoSet, QueryTranstoSet, Bound_q, NN, Trans_outQuery_to_Set, Jaccard
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import heapq as hp
+from operator import itemgetter
 
 # set parameter cell size
 sigma = 0.82
 epsilon = 76
+heap = []
+k = 1
 
 # read some database
 D = readDataasDF('CinC_ECG_torso\\CinC_ECG_torso_TRAIN')
@@ -35,16 +39,23 @@ for q in Q.index:
         Q_trans = set(filter(lambda x: x == x , Q_trans)) # remove NAN
         Target = set(filter(lambda x: x == x , D_trans.loc[i]))
         jac = Jaccard(set(Target), set(Q_trans))
-        if (ans.Jac < jac):
-            ans.TS = i # index: D_trans.loc[i]
-            ans.Jac = jac
-            ans.label = D.label[i]
-    if (query.label != ans.label):
+        if (len(heap) == k):
+            # ans.TS = i # index: D_trans.loc[i]
+            # ans.Jac = jac
+            # ans.label = D.label[i]
+            hp.heappushpop(heap, (jac, i))
+        elif (len(heap) < k):
+            # ans.TS = i
+            # ans.Jac = jac
+            # ans.label = D.label[i]
+            hp.heappush(heap, (jac, i))
+    kNN_list = sorted(heap, reverse = True)
+    if (query.label != D.label[kNN_list[0][1]]):
         errorRate += 1
-        print(q, ans.TS)
-        print(int(query.label), ans.label)
-        print("jac: ", ans.Jac)
+        # print(q, ans.TS)
+        # print(int(query.label), ans.label)
+        # print("jac: ", ans.Jac)
 
 print("errorRate: ", errorRate / len(Q.index))
 # print(errorRate)
-print("count: ", count)
+# print("count: ", count)

@@ -6,12 +6,12 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 
 # set parameter cell size
-sigma = 0.18
-epsilon = 21
+sigma = 0.82
+epsilon = 76
 
 # read some database
-D = readDataasDF('CBF\\CBF_TRAIN')
-Q = readDataasDF('CBF\\CBF_TEST')
+D = readDataasDF('CinC_ECG_torso\\CinC_ECG_torso_TRAIN')
+Q = readDataasDF('CinC_ECG_torso\\CinC_ECG_torso_TEST')
 
 BD = Bound(D) # compute Bound
 # avgTS
@@ -22,6 +22,7 @@ BD = Bound(D) # compute Bound
 D_trans = TimeSeriesTranstoSet(D, BD, epsilon, sigma)
 
 errorRate = 0
+count = 0
 for q in Q.index:
     query = Q.loc[q]
     ans = NN()
@@ -39,10 +40,11 @@ for q in Q.index:
             ans.Jac = jac
             ans.label = D.label[i]
     if (query.label != ans.label):
-        errorRate = errorRate + 1
-        print("index q&i: ", q, ans.TS)
-        print(query.label, ans.label)
-        # print("jac: ", ans.Jac)
+        errorRate += 1
+        print(q, ans.TS)
+        print(int(query.label), ans.label)
+        print("jac: ", ans.Jac)
 
 print("errorRate: ", errorRate / len(Q.index))
-print(errorRate)
+# print(errorRate)
+print("count: ", count)

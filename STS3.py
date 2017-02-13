@@ -31,7 +31,7 @@ for q in Q.index:
         Q_trans = Trans_outQuery_to_Set(query, BD, epsilon, sigma)
     else:
         Q_trans = QueryTranstoSet(query, BD, epsilon, sigma)
-    for i in D_trans.index:
+    for i in D_trans.index:#1NNpart
         Q_trans = set(filter(lambda x: x == x , Q_trans)) # remove NAN
         Target = set(filter(lambda x: x == x , D_trans.loc[i]))
         jac = Jaccard(set(Target), set(Q_trans))

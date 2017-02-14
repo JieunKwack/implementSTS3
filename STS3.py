@@ -1,3 +1,4 @@
+import csv
 import pandas as pd
 import datetime as dt
 import numpy as np
@@ -9,7 +10,7 @@ import heapq as hp
 # set parameter cell size
 sigma = 0.82
 epsilon = 76
-k = 1
+k = 5
 
 # read some database
 D = readDataasDF('CinC_ECG_torso\\CinC_ECG_torso_TRAIN')
@@ -22,7 +23,7 @@ BD = Bound(D) # compute Bound
 # D.label = label
 
 D_trans = TimeSeriesTranstoSet(D, BD, epsilon, sigma)
-
+errorList = []
 errorRate = 0
 for q in Q.index:
     query = Q.loc[q]
@@ -43,8 +44,15 @@ for q in Q.index:
             hp.heappush(heap, (jac, i, D.label[i]))
     kNN_list = sorted(heap, reverse = True)
     if (query.label != kNN_list[0][2]):
+        kNN_list.insert(0, query.label) #qeury.label, (jac, index, label)...
+        errorList.append(kNN_list)
         errorRate += 1
         # print(query.label, kNN_list[0][2])
+
+with open('errorList.csv','w') as csvfile:
+    errWriter = csv.writer(csvfile, delimiter=',')
+    # while errorList:
+    errWriter.writerows(errorList)
 
 # print("finish sort: ", kNN_list)
 print("errorRate: ", errorRate / len(Q.index))

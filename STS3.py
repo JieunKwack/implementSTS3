@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import heapq as hp
 
 # set parameter cell size
-sigma = 0.82#0.18
-epsilon = 76#21
+sigma = 0.82#0.18#0.82
+epsilon = 76#21#76
 k = 5
 styles = ['r','y','g','c','m'] # ,'k','w']
 
@@ -44,16 +44,17 @@ for q in Q.index:
         elif (len(heap) < k):
             hp.heappush(heap, (jac, i, D.label[i])) # jac, index, label
     kNN_list = sorted(heap, reverse = True)
+    fig, ax = plt.subplots()
+    query.plot(legend=False, style='b', ax=ax)
+    patch = list([mpatches.Patch(color='b', label='query'+str(query.label))])
+    for neighbor, style in zip(kNN_list, styles):
+        D.loc[neighbor[1]].plot(legend=False, style=style, ax=ax)
+        patch += list([mpatches.Patch(color=style, label=str(neighbor[2])+':top'+str(kNN_list.index(neighbor))+'('+str(neighbor[1])+')')])
+    plt.legend(handles=patch)
+    fName = 'figureErr\\q'+str(q)+'.png'
+    fig.savefig(fName)
     if (query.label != kNN_list[0][2]):
-        fig, ax = plt.subplots()
-        query.plot(legend=False, style='b', ax=ax)
-        patch = list([mpatches.Patch(color='b', label='query'+str(query.label))])
-        for i, neighbor, style in zip(range(5), kNN_list, styles):
-            D.loc[neighbor[1]].plot(legend=False, style=style, ax=ax)
-            patch += list([mpatches.Patch(color=style, label=str(neighbor[2])+':top'+str(kNN_list.index(neighbor)))])
-        plt.legend(handles=patch)
-        fName = 'figureErr\\q'+str(q)+'.png'
-        fig.savefig(fName)
+
         kNN_list.insert(0, query.label) #qeury.label, (jac, index, label)...
         errorList.append(kNN_list)
         errorRate += 1
